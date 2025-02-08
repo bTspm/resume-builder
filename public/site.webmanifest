@@ -1,0 +1,17 @@
+{
+  "name": "AI Resume Builder",
+  "short_name": "Resume AI",
+  "description": "AI-powered resume builder using Claude and GPT-4",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#2196f3",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
