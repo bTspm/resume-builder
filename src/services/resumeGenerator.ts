@@ -1,6 +1,6 @@
 import { ClaudeAPI } from "../api/claude";
 import { OpenAIAPI } from "../api/openai";
-import { GeneratedResume, ProjectData } from "../types/project";
+import { GeneratedResume, ResumeData } from "../types/project";
 import { generateResumePrompt } from "../prompts/resumePrompts";
 import { AIProvider, AIProviderType } from "../types/ai-provider";
 
@@ -12,7 +12,9 @@ export class ResumeGeneratorService {
   }
 
   private createProvider(providerType: AIProviderType): AIProvider {
-    const apiKey = providerType === 'claude' ? import.meta.env.VITE_CLAUDE_API_KEY : import.meta.env.VITE_OPENAI_API_KEY;
+    const apiKey = providerType === 'claude'
+      ? import.meta.env.VITE_CLAUDE_API_KEY
+      : import.meta.env.VITE_OPENAI_API_KEY;
 
     try {
       switch (providerType) {
@@ -37,24 +39,31 @@ export class ResumeGeneratorService {
     }
   }
 
-  async generateResume(
-    projects: ProjectData[],
-    jobDescription: string
-  ): Promise<GeneratedResume> {
+  async generateResume(resumeData: ResumeData, jobDescription: string): Promise<GeneratedResume> {
     try {
-      console.log('Generating resume with projects:', projects);
-      const prompt = generateResumePrompt(jobDescription, projects);
+      console.log('Generating resume with data:', {
+        projectsCount: resumeData.projects.length,
+        hasProjects: Boolean(resumeData.projects),
+        projectNames: resumeData.projects.map(p => p.name)
+      });
+
+      if (!Array.isArray(resumeData.projects)) {
+        throw new Error('Projects data is not properly structured as an array');
+      }
+
+      const prompt = generateResumePrompt(jobDescription, resumeData.projects);
       console.log('Generated prompt:', prompt);
 
       const response = await this.aiProvider.generateContent(prompt);
       console.log('Raw AI response:', response.completion);
 
       try {
-        let parsedResponse: GeneratedResume;
         const cleanedResponse = response.completion
           .replace(/^```json\s*/, '')
           .replace(/```$/, '')
           .trim();
+
+        let parsedResponse: GeneratedResume;
 
         try {
           parsedResponse = JSON.parse(cleanedResponse);
@@ -71,24 +80,12 @@ export class ResumeGeneratorService {
           }
         }
 
-        // Validate the response structure
-        if (!parsedResponse || typeof parsedResponse !== 'object') {
-          throw new Error('Response is not an object');
-        }
-
-        if (!parsedResponse.summary || typeof parsedResponse.summary !== 'string') {
-          throw new Error('Missing or invalid summary');
-        }
-
-        if (!Array.isArray(parsedResponse.projects)) {
-          throw new Error('Missing or invalid projects array');
-        }
-
-        parsedResponse.projects.forEach((project, index) => {
-          if (!project.name || !Array.isArray(project.selected_achievements)) {
-            throw new Error(`Invalid project structure at index ${index}`);
-          }
-        });
+        // Sort achievements by relevance score
+        parsedResponse.projects = parsedResponse.projects.map(project => ({
+          ...project,
+          selected_achievements: project.selected_achievements
+            .sort((a, b) => b.relevance_score - a.relevance_score)
+        }));
 
         return parsedResponse;
       } catch (parseError) {

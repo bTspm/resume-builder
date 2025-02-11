@@ -1,11 +1,97 @@
-export interface ProjectData {
+export interface ProfessionalInfo {
   company: string;
   location: string;
-  role: string;
+  total_experience: string;
   period: string;
-  project_name: string;
-  tech_stack: string[];
-  achievements: string[];
+}
+
+export interface Architecture {
+  type?: string;
+  pattern?: string;
+  migration?: string;
+  availability?: string;
+}
+
+export interface TechnicalImplementation {
+  backend: {
+    technology: string;
+    service_type?: string;
+    api?: string;
+    version_migration?: string;
+  }[];
+  frontend: {
+    framework: string;
+    language?: string;
+  }[];
+  databases: {
+    type?: string;
+    cache?: string;
+    search?: string;
+  }[];
+  cloud?: {
+    platform: string;
+    services: string[];
+  };
+  devops?: {
+    ci_cd?: string[];
+    monitoring?: string[];
+  };
+  security?: {
+    auth: string;
+  }[];
+  background_processing?: string[];
+}
+
+export interface Project {
+  name: string;
+  period: string;
+  type: string;
+  architecture: Architecture[];
+  technical_implementation: TechnicalImplementation;
+  key_features: string[];
+}
+
+export interface CoreSkills {
+  architecture: string[];
+  security: string[];
+  reliability: string[];
+  development: string[];
+  monitoring: {
+    tools: string[];
+  };
+  testing: {
+    frameworks: string[];
+  };
+  devops: string[];
+  productivity_tools: string[];
+}
+
+export interface Leadership {
+  technical: string[];
+  management: string[];
+}
+
+export interface ResumeData {
+  professional_info: ProfessionalInfo;
+  projects: Project[];
+  core_skills: CoreSkills;
+  leadership: Leadership;
+}
+
+export interface GeneratedAchievement {
+  achievement: string;
+  relevance_score: number;
+}
+
+export interface GeneratedProject {
+  name: string;
+  selected_achievements: GeneratedAchievement[];
+}
+
+export interface GeneratedResume {
+  summary: string;
+  cover_letter: string;
+  projects: GeneratedProject[];
 }
 
 export interface ClaudeConfig {
@@ -20,41 +106,3 @@ export interface ClaudeResponse {
   stop_reason: string | null;
   model: string;
 }
-
-// Add this to help with type checking
-export interface RawProjectData {
-  company: string;
-  location: string;
-  role: string;
-  period: string;
-  projects: Project[];
-}
-
-export interface Project {
-  project_name: string;
-  tech_stack:   string[];
-  achievements: string[];
-}
-
-
-export interface TechnicalSkills {
-  languages: string[];
-  frameworks: string[];
-  databases: string[];
-  cloud_devops: string[];
-  development_tools: string[];
-}
-
-export interface ProjectWithAchievements {
-  name: string;
-  selected_achievements: string[];
-}
-
-export interface GeneratedResume {
-  summary: string;
-  technical_skills: TechnicalSkills;
-  projects: ProjectWithAchievements[];
-}
-
-
-

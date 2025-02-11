@@ -1,4 +1,3 @@
-// src/api/claude.ts
 import Anthropic from '@anthropic-ai/sdk';
 import { ClaudeConfig, ClaudeResponse } from '../types/project';
 

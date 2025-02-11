@@ -17,7 +17,7 @@ const ProviderSelection: React.FC<ProviderSelectionProps> = ({
                                                                onToggleProvider
                                                              }) => {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+    <Box sx={{ display: 'flex' }}>
       <FormGroup row>
         {AI_PROVIDERS.map((provider) => (
           <FormControlLabel

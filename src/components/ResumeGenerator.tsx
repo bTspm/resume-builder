@@ -1,10 +1,11 @@
+// Modified ResumeGenerator.tsx
 import React from 'react';
 import { Container, Snackbar, Grid } from '@mui/material';
-import { ResumeGeneratorService } from "../services/resumeGenerator.ts";
-import { useResumeStore } from "../store/resumeStore.ts";
-import { AI_PROVIDERS, AIProviderType } from "../types/ai-provider.ts";
-import { GeneratedResume } from "../types/project.ts";
-import { ProjectLoader } from "../utils/projectLoader.ts";
+import { ResumeGeneratorService } from "../services/resumeGenerator";
+import { useResumeStore } from "../store/resumeStore";
+import { AIProviderType } from "../types/ai-provider";
+import { GeneratedResume } from "../types/project";
+import { ProjectLoader } from "../utils/projectLoader";
 import ResumeForm from './ResumeForm';
 import ResumeResultCard from './ResumeResultCard';
 
@@ -13,9 +14,13 @@ const ResumeGenerator: React.FC = () => {
     jobDescription,
     providers,
     selectedProviders,
+    selectedStack,
+    includeCoverLetter,
     setJobDescription,
     setProviderResult,
     toggleProvider,
+    setSelectedStack,
+    toggleCoverLetter,
     resetResults,
   } = useResumeStore();
 
@@ -45,10 +50,19 @@ const ResumeGenerator: React.FC = () => {
       setProviderResult(providerId, { isGenerating: true, error: null });
 
       try {
-        const projects = await ProjectLoader.loadAllProjects();
+        const resumeData = await ProjectLoader.loadResumeData(selectedStack);
+        console.log('Loaded resume data:', {
+          projectsCount: resumeData.projects.length,
+          hasProjects: Boolean(resumeData.projects),
+          projectNames: resumeData.projects.map(p => p.name)
+        });
 
         const generator = new ResumeGeneratorService(providerId);
-        const optimizedResume = await generator.generateResume(projects, jobDescription);
+        const optimizedResume = await generator.generateResume(
+          resumeData,
+          jobDescription,
+          includeCoverLetter
+        );
         setProviderResult(providerId, { resume: optimizedResume, isGenerating: false });
       } catch (err: any) {
         console.error(`Error generating for ${providerId}:`, err);
@@ -77,10 +91,16 @@ const ResumeGenerator: React.FC = () => {
   };
 
   const handleDownload = (resume: GeneratedResume, providerId: string) => {
-    const content = `Professional Summary:\n${resume.summary}\n\n` +
+    const content = [
+      'Professional Summary:',
+      resume.summary,
+      '',
       resume.projects.map(project =>
-        `${project.name}\n\n${project.selected_achievements.join('\n')}`
-      ).join('\n\n');
+        `${project.name}\n\n${project.selected_achievements.map(a => a.achievement).join('\n')}`
+      ).join('\n\n'),
+      '',
+      resume.cover_letter ? `Cover Letter:\n${resume.cover_letter}` : ''
+    ].join('\n');
 
     const blob = new Blob([content], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -93,23 +113,25 @@ const ResumeGenerator: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  const isGenerating = Object.values(providers).some(p => p.isGenerating);
-
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <ResumeForm
         jobDescription={jobDescription}
         selectedProviders={selectedProviders}
+        selectedStack={selectedStack}
+        includeCoverLetter={includeCoverLetter}
         onJobDescriptionChange={setJobDescription}
         onToggleProvider={toggleProvider}
+        onStackChange={setSelectedStack}
+        onToggleCoverLetter={toggleCoverLetter}
         onGenerate={handleGenerate}
-        isGenerating={isGenerating}
+        isGenerating={Object.values(providers).some(p => p.isGenerating)}
       />
 
       {Object.entries(providers).some(([_, data]) => data.resume || data.isGenerating) && (
         <Grid container spacing={3} sx={{ mt: 4 }}>
           {Array.from(selectedProviders).map(providerId => {
-            const provider = AI_PROVIDERS.find(p => p.id === providerId)!;
+            const provider = { id: providerId, name: providerId === 'claude' ? 'Claude AI' : 'GPT-4' };
             const providerData = providers[providerId];
 
             return (
