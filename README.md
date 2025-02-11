@@ -192,3 +192,6 @@ Check the browser console for detailed error messages during development.
 - js-yaml
 - TypeScript
 - Vite
+
+## Demo
+[<img src="docs/demo.png" width="600"/>]
